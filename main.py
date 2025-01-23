@@ -2,8 +2,6 @@ import sys
 import os
 import google.generativeai as genai
 
-genai.configure(api_key=os.getenv('GOOGLE_API_KEY'))
-model = genai.GenerativeModel(os.getenv('GOOGLE_MODEL', 'gemini-1.5-flash'))
 
 PROMPT = """
 "Translate the following text:
@@ -34,22 +32,30 @@ You can use online translation tools like Google Translate or DeepL to compare t
 For more complex or nuanced texts, it's always a good idea to have a human translator review the LLM's output.
 """
 
+class TranslateService:
+    """TranslateService class to translate text using Google Generative AI."""
+
+    def __init__(self):
+        genai.configure(api_key=os.getenv('GOOGLE_API_KEY'))
+        self.model = genai.GenerativeModel(os.getenv('GOOGLE_MODEL', 'gemini-1.5-flash'))
+    def translate(self, text):
+        prompt = PROMPT.format(text=text)
+        response = self.model.generate_content(prompt)
+        return response.text
+
+    def run(self):
+        try:
+            while True:
+                text = input("Enter text to translate: ")
+                translated_text = self.translate(text)
+                print(translated_text)
+        except (KeyboardInterrupt, EOFError):
+            print("\nExiting...")
+            sys.exit(0)
 
 def main():
-    # Read from stdin line by line
-    for line in sys.stdin:
-        # Strip whitespace and newlines
-        line = line.strip()
-
-        # Skip empty lines
-        if not line:
-            continue
-        
-        # substitute the text in the prompt
-        prompt = PROMPT.format(text=line)
-        
-        response = model.generate_content(prompt)
-        print(response.text)
+    service = TranslateService()
+    service.run()
 
 if __name__ == "__main__":
     main()
